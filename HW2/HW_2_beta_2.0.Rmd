@@ -201,7 +201,7 @@ Plot the distribution of standarized residuals.
 Residuals<-c()
 Residuals <-data.frame(
   residuals = standarized_residuals,
-  Date <- date[-1]
+  Date = date[-1]
 )
 ggplot(Residuals,aes(x=residuals))+
   geom_vline(aes(xintercept=mean(residuals)),colour = "red",linetype="dashed")+geom_histogram(binwidth = 0.00125,colour = "brown2")+
@@ -231,8 +231,54 @@ skewness(bac_daily_returns$Returns)
 
 ```
 
+First, forecast daily volatility of next 252 days. 
+```{r}
+spec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(2,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(data = bac_daily_returns$Returns, spec = spec)
+forc = ugarchforecast(fit, n.ahead=252)
+```
+
+Second, plot the forecasted daily volatility.
+
+```{r}
+plot(fit@fit$sigma)
+```
+
+```{r}
+# unclass(sigma(forc))["1990-01-16 08:00:00"]
+x <- unclass(sigma(forc))[,"1990-01-16 08:00:00"][1:252]
+x.level()
+```
 
 
+
+
+```{r}
+
+# # date[length(date)]
+# next_year_date <- seq.Date(as.Date(date[length(date)])+1, length.out = 252, by = "day")
+# forecast <- data.frame(
+#   Date = next_year_date,
+#   residuals = list(forc@forecast$sigmaFor)
+# )
+# names(forecast)[names(forecast) == "X1990.01.16.08.00.00"] <- colnames(Residuals)[1]
+# total <- rbind(Residuals,forecast)
+```
+
+```{r}
+# col = c(rep("orange", 7320), rep("green", 252))
+# total <- cbind(total,col)
+# head(total)
+```
+
+```{r}
+# ggplot(total, aes(x=Date, y=residuals)) + 
+#   geom_line(aes(colour=col, group=1)) + 
+#   scale_colour_identity()
+
+```
 
 
 
