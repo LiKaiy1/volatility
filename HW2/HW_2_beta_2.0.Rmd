@@ -1,0 +1,259 @@
+# Homework 2 
+This R notebook is created by Kaiyi Li at March 1st, 2020 for the Homework 2 of volatility class.
+
+Before we start everything, we read the data.
+```{r}
+bac_price <- read.csv('bac19.csv',head = T)
+bac <- bac_price$bac
+date <- bac_price$date
+bac_price <- data.frame(
+  DATE = as.Date.factor(date),
+  price = bac
+)
+# head(bac_price)
+```
+
+Plot the price path of BAC stock
+```{r}
+library(ggplot2)
+library(dplyr)
+theme_set(theme_classic())
+ggplot(bac_price, aes(x=DATE, y=price)) +
+  geom_line() + 
+  labs(title="Stock Price Path of BAC",
+       caption="Source: Given",
+       y="Price of Bank Of America")
+  # xlab("")
+```
+
+
+Plot the return path of bac.
+```{r}
+# Data frame of the returns
+bac_daily_returns<-diff(log(bac))
+bac_daily_returns <- data.frame(
+  Date = as.Date.factor(date[-1]),
+  Returns = bac_daily_returns
+)
+ggplot(bac_daily_returns, aes(x=Date)) +
+  geom_line(aes(y=Returns),group = 1,colour = "blue") +
+  labs(title="Logarithmic Daily Returns of BAC",
+       caption="Source: Given ",
+       y="Returns")
+```
+
+Plot the histogram of returns
+```{r}
+# ggplot(df, aes(x=weight)) + geom_histogram()
+ggplot(bac_daily_returns,aes(x=Returns))+
+  geom_vline(aes(xintercept=mean(Returns)),colour = "red",linetype="dashed")+geom_histogram(binwidth = 0.00125,colour = "blue")+
+  geom_density(alpha=0.05, fill="#FF6666") +
+  labs(
+  title = "Distribution of Logarithmic Daily Returns of BAC"
+)
+```
+
+## 1 Use the attached data of daily equity prices of Bank of America (BAC) starting in 1990. In each case estimate the model with an intercept.
+
+### a)Estimate an ARCH(1) model and report the Schwarz information criterion
+
+```{r}
+library(rugarch)
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(1,0)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+print(fit)
+```
+**The SIC (BIC) for ARCH(1) is -4.8154**
+
+
+###b) Estimate an ARCH(9) model and report the Schwarz information criterion
+```{r}
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(9,0)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+print(fit)
+```
+**The SIC (BIC) for ARCH(9) model is -5.1150.**
+
+###c) Estimate a GARCH(1,1) model and report the Schwarz information criterion
+```{r}
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+print(fit)
+```
+**The SIC (BIC) for GARCH(1,1) model is -5.1535.**
+
+
+###d) Estimate a GARCH(1,2) model and report the Schwarz information criterion
+```{r}
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(2,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+print(fit)
+```
+**The SIC (BIC) for GARCH(1,2) model is -5.1523.**
+###e) Pick another order GARCH model and report the Schwarz criterion
+I picked GARCH(2,2) model.
+```{r}
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(2,2)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+print(fit)
+```
+
+**The SIC (BIC) for GARCH(2,2) model is -5.1536.**
+###f) Introduce another lagged or deterministic variable to see if it is significant.
+```{r}
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(1,1),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+print(fit)
+```
+**Instead of not using any model, I used ARMA(1,1) as a mean model. It turns out that both the ar(1) term and ma(1) term are not significant.**
+
+###Which is preferred? Do all of these models satisfy the basic criteria for a good model?
+**GARCH(1,1) is preferred given it has the most significant joint effect. Only GARCH(1,1) and GARCH(2,1) satisfy basic criteria as good models for their significance in the joint effect.**
+
+##2. For the GARCH(1,2) model(one GARCH and two ARCH terms), calculate the time series of annualized volatilities. What was the maximum conditional volatility and when did this occur?
+First we fit the GARCH(1,2) model.
+```{r}
+#Fit the GARCH(1,2) model
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(2,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
+```
+Calculate and plot the annualized conditional volatility series
+```{r}
+annualized_volatility <- fit@fit$sigma*sqrt(252)
+bac_annualized_volatility <- data.frame(
+  Date = as.Date.factor(date[-1]),
+  Volatility = annualized_volatility
+)
+ggplot(bac_annualized_volatility, aes(x=Date)) +
+  geom_line(aes(y=Volatility),group = 1,colour = "orange") +
+  labs(title="Annualized Volatility",
+       caption="Source: Given ",
+       y="Volatility")
+```
+
+Find the date of the maximum conditional volatility.
+
+```{r}
+bac_annualized_volatility[which.max(bac_annualized_volatility$Volatility),]
+```
+**The maximum conditional volatility is 2.163118 (annualized), it occured on 2009-01-23.**
+
+##3.Test the autocorrelation of the standardized residuals and the squared standardized residuals with 10 lags. Does this model pass both tests? Explain.
+Calculate the standarized_residuals and its square. 
+```{r}
+standarized_residuals <- (fit@fit$residuals-mean(fit@fit$residuals))/sqrt(var(fit@fit$residuals))
+squared_standarized_residuals <- standarized_residuals**2
+```
+Plot their ACFs.
+```{r}
+sracf <- acf(standarized_residuals,plot = F)
+sracf <- with(sracf, data.frame(lag, acf))
+ssracf <-acf(squared_standarized_residuals,plot = F)
+ssracf <- with(ssracf, data.frame(lag, acf))
+ggplot(data=sracf, mapping=aes(x=lag, y=acf))+
+       geom_bar(stat = "identity", position = "identity")
+ggplot(data=ssracf, mapping=aes(x=lag, y=acf))+
+       geom_bar(stat = "identity", position = "identity")
+    
+```
+
+Test for Autocorrelation
+H0: The residuals are not autocorrelated. 
+Ha: The residuals are autocorrelated. 
+Significance: 0.05.
+
+```{r}
+qchisq(0.95,30)
+```
+
+
+```{r}
+library(stats)
+library(lawstat)
+BT = Box.test(standarized_residuals, lag=10, type = "Ljung-Box", fitdf=0)
+BT
+```
+
+Given that 76.866>50.89, we reject the null hypothesis at 95% confidence interval. Therefore, **The standarized residuals are autocorrelated.**
+```{r}
+BT = Box.test(squared_standarized_residuals, lag=10, type = "Ljung-Box", fitdf=0)
+BT
+```
+Given that 4511.1>50.89, we reject the null hypothesis at 95% confidence interval. Therefore, **The squared standarized residuals are autocorrelated.**
+
+##4. Report the skewness and kurtosis of the standardized residuals. Compare these with the BAC returns.
+Plot the distribution of standarized residuals.
+```{r}
+Residuals<-c()
+Residuals <-data.frame(
+  residuals = standarized_residuals,
+  Date <- date[-1]
+)
+ggplot(Residuals,aes(x=residuals))+
+  geom_vline(aes(xintercept=mean(residuals)),colour = "red",linetype="dashed")+geom_histogram(binwidth = 0.00125,colour = "brown2")+
+  geom_density(alpha=0.5, fill="#FF6666") +
+  labs(
+  title = "Distribution of Standarized Residuals"
+)
+```
+
+Calculate the kurtosis and skewness for standarized residual.
+```{r}
+library(moments)
+kurtosis(standarized_residuals)
+skewness(standarized_residuals)
+```
+The kurtosis of standarized residuals is 29.97432, the skewness of standarized residuals is -0.3316823.
+
+Calculate the kurtosis and skewness for daily returns of BAC.
+```{r}
+kurtosis(bac_daily_returns$Returns)
+skewness(bac_daily_returns$Returns)
+```
+**The kurtosis and skewness of standarized residuals and daily returns of BAC are excatly the same!**
+
+##5. Forecast the next year of daily volatility for BAC and plot the result.
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
