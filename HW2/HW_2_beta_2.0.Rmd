@@ -227,9 +227,6 @@ skewness(bac_daily_returns$Returns)
 **The kurtosis and skewness of standarized residuals and daily returns of BAC are excatly the same!**
 
 ##5. Forecast the next year of daily volatility for BAC and plot the result.
-```{r}
-
-```
 
 First, forecast daily volatility of next 252 days. 
 ```{r}
@@ -241,53 +238,90 @@ forc = ugarchforecast(fit, n.ahead=252)
 ```
 
 Second, plot the forecasted daily volatility.
-
 ```{r}
-plot(fit@fit$sigma)
+x <- c(unclass(sigma(forc))[,"1990-01-16 08:00:00"][1:252])
+x <- c(fit@fit$sigma,x)
+horizon <- seq.Date(as.Date(date[length(date)])+1, length.out = 252, by = "day")
+horizon <- c(as.Date(date)[-1],horizon)
+combined_daily_data <- data.frame(
+  Date = horizon,
+  volatilities = x,
+  col = c(rep("orange", 7320), rep("green", 252))
+)
+ggplot(combined_daily_data, aes(x=Date, y=volatilities)) +
+  geom_line(aes(colour=col, group=1)) +
+  scale_colour_identity()+
+  labs(
+    title = "Estimate and Predicted Daily Volatility",
+    caption = "Yellow: Estimates, Green: Predicted"
+  )
 ```
 
+Or just see the predicted plot
 ```{r}
-# unclass(sigma(forc))["1990-01-16 08:00:00"]
-x <- unclass(sigma(forc))[,"1990-01-16 08:00:00"][1:252]
-x.level()
-```
-
-
-
-
-```{r}
-
-# # date[length(date)]
-# next_year_date <- seq.Date(as.Date(date[length(date)])+1, length.out = 252, by = "day")
-# forecast <- data.frame(
-#   Date = next_year_date,
-#   residuals = list(forc@forecast$sigmaFor)
-# )
-# names(forecast)[names(forecast) == "X1990.01.16.08.00.00"] <- colnames(Residuals)[1]
-# total <- rbind(Residuals,forecast)
-```
-
-```{r}
-# col = c(rep("orange", 7320), rep("green", 252))
-# total <- cbind(total,col)
-# head(total)
-```
-
-```{r}
-# ggplot(total, aes(x=Date, y=residuals)) + 
-#   geom_line(aes(colour=col, group=1)) + 
-#   scale_colour_identity()
-
+predicted_sets <- data.frame(
+  Date = seq.Date(as.Date(date[length(date)])+1, length.out = 252, by = "day"),
+  volatilities = c(unclass(sigma(forc))[,"1990-01-16 08:00:00"][1:252]) 
+)
+ggplot(predicted_sets, aes(x=Date)) +
+  geom_line(aes(y=volatilities),group = 1,colour = "green") +
+  labs(title="Predicted Volatility",
+       caption="Source: Predicted ",
+       y="Volatility")
 ```
 
 
 
+#7. Reestimate the GARCH(1,2) with student-t distribution. Now what is the Schwarz criterion? Does it find this estimate preferable?
+```{r}
+spec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(2,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),distribution.model = "std")
+fit = ugarchfit(data = bac_daily_returns$Returns, spec = spec)
+print(fit)
+```
+**The SIC (BIC) for GARCH(2,1) model is -5.2216, which is smaller than -5.1523(BIC for GARCH(2,1) with normal distribution). Therefore, GARCH(2,1) with student t distribution is preferrable.**
+
+##7. Describe the volatility pattern of a GARCH(1,1):
+Because we can rewrite the GARCH(1,1) in this fashion:
+$$
+\epsilon_t^2 = \omega+(\alpha+\beta)\epsilon_{t-1}^2+v_t -\beta v_{t-1}\\
+v_t -\beta v_{t-1} =\epsilon_t^2-(\alpha+\beta)\epsilon_{t-1}^2 -\omega
+$$
+###a. When the sum of alpha plus beta is small?
+When the sum of alpha plus beta is small, (smaller than 1), it is still stationary. The effect of volatility shock will not be persistent for long.(Black line in the attached simulation plot)
+###b. When the sum of alpha plus beta is bigger than one?
+When the sum of alpha plus beta is bigger than 1, it is not stationary. The effect of volatility shock will be persistent. Because we are unable to simulate this situation, we simulate a close one (alpha = 0.5,beta = 0.49, green line in the simulation plot)
+###c. When alpha is small and beta is big with a sum slightly less than one?
+In the short run, the effect of volatility shock decays really quick, but it lasts for a long time.
+###d. When alpha is big and beta is small with a sum slightly less than one?
+In the short run, the effect of volatility shock persist, but it only last for a very short period.
 
 
-
-
-
-
+To further illustrate my points, here are some simulations.
+```{r}
+library(fGarch)
+spec1 = garchSpec(model = list(alpha=0.1,beta=0.1))
+sim1<- garchSim(spec1, n = 1000)
+spec2 = garchSpec(model = list(alpha=0.5,beta=0.49))
+sim2<- garchSim(spec2, n = 1000)
+spec3 = garchSpec(model = list(alpha=0.1,beta=0.7))
+sim3<- garchSim(spec3, n = 1000)
+spec4 = garchSpec(model = list(alpha=0.7,beta=0.1))
+sim4<- garchSim(spec4, n = 1000)
+# spec4 = garchSim(model = list(alpha = 0.8,beta = 0.1))
+# sim4 <- garchSim(spec4,n=1000)
+sims <- cbind(sim1$garch,sim2$garch,sim3$garch,sim4$garch)
+sims <- as.data.frame(sims)
+ggplot(as.data.frame(sims),aes(x=1:1000)) +
+  geom_line(aes(y=sims$V1),group = 1,colour = "black") +
+  geom_line(aes(y=sims$V2),group = 1,colour = "green")+
+  geom_line(aes(y=sims$V3),group = 1,colour = "red") +
+  geom_line(aes(y=sims$V4),group = 1,colour = "gold") +
+  labs(title="Simulate Volatility",
+       caption="Source: Simulations ",
+       y="Volatility")
+```
 
 
 
