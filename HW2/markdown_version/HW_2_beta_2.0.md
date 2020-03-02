@@ -1,7 +1,7 @@
 # Homework 2 
 This R notebook is created by Kaiyi Li at March 1st, 2020 for the Homework 2 of volatility class.
 
-Before we start everything, we read the data.
+Before we start everything, we read the data. (I convert the txt file to csv file for convienece.)
 ```{r}
 bac_price <- read.csv('bac19.csv',head = T)
 bac <- bac_price$bac
@@ -13,7 +13,8 @@ bac_price <- data.frame(
 # head(bac_price)
 ```
 
-Plot the price path of BAC stock
+Plot the price path of BAC stock.
+
 ```{r}
 library(ggplot2)
 library(dplyr)
@@ -23,12 +24,13 @@ ggplot(bac_price, aes(x=DATE, y=price)) +
   labs(title="Stock Price Path of BAC",
        caption="Source: Given",
        y="Price of Bank Of America")
-ggplot2::ggsave("StockPricePathofBAC.jpg")
   # xlab("")
 ```
 
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/StockPricePathofBAC.jpg)
 
 Plot the return path of bac.
+
 ```{r}
 # Data frame of the returns
 bac_daily_returns<-diff(log(bac))
@@ -41,10 +43,12 @@ ggplot(bac_daily_returns, aes(x=Date)) +
   labs(title="Logarithmic Daily Returns of BAC",
        caption="Source: Given ",
        y="Returns")
-ggplot2::ggsave("LogarithmicDailyReturnsofBAC.jpg")
 ```
 
-Plot the histogram of returns
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/LogarithmicDailyReturnsofBAC.jpg)
+
+Plot the histogram of returns.
+
 ```{r}
 # ggplot(df, aes(x=weight)) + geom_histogram()
 ggplot(bac_daily_returns,aes(x=Returns))+
@@ -53,8 +57,9 @@ ggplot(bac_daily_returns,aes(x=Returns))+
   labs(
   title = "Distribution of Logarithmic Daily Returns of BAC"
 )
-ggplot2::ggsave("DistributionOfLogarithmicDailyReturnsOfBAC.jpg")
 ```
+
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/DistributionOfLogarithmicDailyReturnsOfBAC.jpg)
 
 ## 1 Use the attached data of daily equity prices of Bank of America (BAC) starting in 1990. In each case estimate the model with an intercept.
 
@@ -135,6 +140,9 @@ garchSpec <- ugarchspec(
 fit = ugarchfit(spec = garchSpec, data = bac_daily_returns$Returns )
 ```
 Calculate and plot the annualized conditional volatility series
+
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/AnnualizedVolatility.jpg)
+
 ```{r}
 annualized_volatility <- fit@fit$sigma*sqrt(252)
 bac_annualized_volatility <- data.frame(
@@ -146,7 +154,6 @@ ggplot(bac_annualized_volatility, aes(x=Date)) +
   labs(title="Annualized Volatility",
        caption="Source: Given ",
        y="Volatility")
-ggplot2::ggsave("AnnualizedVolatility.jpg")
 ```
 
 Find the date of the maximum conditional volatility.
@@ -163,6 +170,7 @@ standarized_residuals <- (fit@fit$residuals-mean(fit@fit$residuals))/sqrt(var(fi
 squared_standarized_residuals <- standarized_residuals**2
 ```
 Plot their ACFs.
+
 ```{r}
 sracf <- acf(standarized_residuals,plot = F)
 sracf <- with(sracf, data.frame(lag, acf))
@@ -170,15 +178,18 @@ ssracf <-acf(squared_standarized_residuals,plot = F)
 ssracf <- with(ssracf, data.frame(lag, acf))
 ggplot(data=sracf, mapping=aes(x=lag, y=acf))+
        geom_bar(stat = "identity", position = "identity")
-ggplot2::ggsave("StandarizedResidualACF.jpg")
-```
-
-```{r}
 ggplot(data=ssracf, mapping=aes(x=lag, y=acf))+
        geom_bar(stat = "identity", position = "identity")
-ggplot2::ggsave("SquaredStandarizedResidualACF.jpg")
+    
 ```
 
+The ACF plot of standarized residual:
+
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/StandarizedResidualACF.jpg)
+
+The ACF plot of squared standarized Residuals
+
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/SquaredStandarizedResidualACF.jpg)
 
 Test for Autocorrelation
 H0: The residuals are not autocorrelated. 
@@ -218,11 +229,12 @@ ggplot(Residuals,aes(x=residuals))+
   labs(
   title = "Distribution of Standarized Residuals"
 )
-ggplot2::ggsave("DistributionOfStandarizedResiduals.jpg")
-
 ```
 
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/DistributionOfStandarizedResiduals.jpg)
+
 Calculate the kurtosis and skewness for standarized residual.
+
 ```{r}
 library(moments)
 kurtosis(standarized_residuals)
@@ -235,6 +247,8 @@ Calculate the kurtosis and skewness for daily returns of BAC.
 kurtosis(bac_daily_returns$Returns)
 skewness(bac_daily_returns$Returns)
 ```
+The kurtosis of standarized residuals is 29.97432, the skewness of standarized residuals is -0.3316823.
+
 **The kurtosis and skewness of standarized residuals and daily returns of BAC are excatly the same!**
 
 ##5. Forecast the next year of daily volatility for BAC and plot the result.
@@ -266,10 +280,12 @@ ggplot(combined_daily_data, aes(x=Date, y=volatilities)) +
     title = "Estimate and Predicted Daily Volatility",
     caption = "Yellow: Estimates, Green: Predicted"
   )
-ggplot2::ggsave("EstimateAndPredictedDailyVolatility.jpg")
 ```
 
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/EstimateAndPredictedDailyVolatility.jpg)
+
 Or just see the predicted plot
+
 ```{r}
 predicted_sets <- data.frame(
   Date = seq.Date(as.Date(date[length(date)])+1, length.out = 252, by = "day"),
@@ -280,12 +296,12 @@ ggplot(predicted_sets, aes(x=Date)) +
   labs(title="Predicted Volatility",
        caption="Source: Predicted ",
        y="Volatility")
-ggplot2::ggsave("PredictedDailyVolatility.jpg")
 ```
 
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/PredictedDailyVolatility.jpg)
 
+##6. Reestimate the GARCH(1,2) with student-t distribution. Now what is the Schwarz criterion? Does it find this estimate preferable?
 
-#7. Reestimate the GARCH(1,2) with student-t distribution. Now what is the Schwarz criterion? Does it find this estimate preferable?
 ```{r}
 spec <- ugarchspec(
   variance.model=list(model="sGARCH", garchOrder=c(2,1)),
@@ -334,10 +350,9 @@ ggplot(as.data.frame(sims),aes(x=1:1000)) +
   labs(title="Simulate Volatility",
        caption="Source: Simulations ",
        y="Volatility")
-ggplot2::ggsave("SimulateVolatility.jpg")
 ```
 
-
+![](/Users/likaiyi/Desktop/volatility/HW2/markdown_version/SimulateVolatility.jpg)
 
 
 
