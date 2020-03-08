@@ -23,7 +23,7 @@ ggplot(bac_price, aes(x=DATE, y=price)) +
   labs(title="Stock Price Path of BAC",
        caption="Source: Given",
        y="Price of Bank Of America")
-ggplot2::ggsave("StockPricePathofBAC.jpg")
+# ggplot2::ggsave("StockPricePathofBAC.jpg")
   # xlab("")
 ```
 
@@ -41,7 +41,7 @@ ggplot(bac_daily_returns, aes(x=Date)) +
   labs(title="Logarithmic Daily Returns of BAC",
        caption="Source: Given ",
        y="Returns")
-ggplot2::ggsave("LogarithmicDailyReturnsofBAC.jpg")
+# ggplot2::ggsave("LogarithmicDailyReturnsofBAC.jpg")
 ```
 
 Plot the histogram of returns
@@ -246,6 +246,7 @@ spec <- ugarchspec(
   mean.model=list(armaOrder = c(0,0),include.mean=F))
 fit = ugarchfit(data = bac_daily_returns$Returns, spec = spec)
 forc = ugarchforecast(fit, n.ahead=252)
+forc 
 ```
 
 Second, plot the forecasted daily volatility.

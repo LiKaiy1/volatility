@@ -1,5 +1,17 @@
 # Homework 2 
-This R notebook is created by Kaiyi Li at March 1st, 2020 for the Homework 2 of volatility class.
+*Kaiyi Li*
+
+*kl2538*
+
+*N18881575*
+
+*kaiyi.li@stern.nyu.edu*
+
+This R notebook is created by Kaiyi Li at March 1st, 2020 for the Homework 2 of volatility class. All the codes published on github.
+
+Github link:
+
+https://github.com/LiKaiy1/volatility/blob/master/HW2/markdown_version/HW_2_beta_2.0.pdf
 
 Before we start everything, we read the data. (I convert the txt file to csv file for convienece.)
 ```{r}
