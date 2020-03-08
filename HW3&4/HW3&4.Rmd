@@ -302,12 +302,37 @@ Because that the lagged VIX squared is significant, we could conclude that the v
 
 ## 6. If you are long a 1 month variance swap on a market index,
 ### a) What will happen to your position on a day of large absolute returns?
+By long a 1 month variance swap, I paid a fix amount and receive a float amount based on variance. If a have a large absolute returns (which means larger than usual returns), the underlying variance of my variance swap increased and my position would increase if the swap is mark to market.
 
-b) How will index option implied volatility change following a large positive
-return or a large negative return?
-c) Do you think variance swaps will respond differently to positive and negative
-returns? Why?
+### b) How will index option implied volatility change following a large positive return or a large negative return?
 
+Both a large positive return or a large negative return would result in an increase in implied volatility.
+
+###c) Do you think variance swaps will respond differently to positive and negative returns? Why?
+ 
+Variance swaps will respond differently to positive and negative returns. Because of asymmetric volatilities. Negative returns usually sharper and thus has larger variance. Therefore the variance swap would respond differently. 
+
+## 7. Compute the log change in the VIX.
+
+###a) Does this show autocorrelation?
+First, let's plot the acf of the log changes of vix.
+```{r}
+significance_level <- qnorm((1 + 0.95)/2)/sqrt(sum(!is.na(log_changes_vix)))
+vix_acf <- acf(log_changes_vix,plot = F)
+vix_acf <- with(vix_acf,data.frame(lag,acf))
+ggplot(data=vix_acf, mapping=aes(x=lag, y=acf))+
+       geom_bar(stat = "identity", position = "identity")+
+      geom_hline(yintercept = significance_level,colour = "red",linetype="dashed")+
+  geom_hline(yintercept = -significance_level,colour = "red",linetype="dashed")
+# ggplot2::ggsave("ACF_Of_VIX_log_changes.jpg")
+```
+There is some significance (5%) autocorrelation in the first few lags.
+
+###b) Does this have volatility clustering?
+
+It has volatility clustering. Lag 1, 2 are significantly autocorrelated at 5% significance level, which indicates volatility clustering.
+
+###c) Build a model for the volatility of the vix that incorporates both these features. This is a model of the volatility of volatility.
 
 
 
