@@ -190,7 +190,7 @@ The Schwarz criterion of GARCH is -6.488777.
 
 **Both E-GARCH and GJR-GARCH are better than GARCH because their Schwarz criterion is smaller.**
 
-### c) Can you find something even better?
+### b) Can you find something even better?
 Let's try a different distribution.
 ```{r}
 EgarchSpecT <- ugarchspec(
@@ -217,7 +217,19 @@ print(infocriteria(xle_egarch_fit))
 
 **SPY has a stronger strength of the asymmetry than XLE.** Here is the reason. The difference of Schwarz criterion between EGARCH and GARCH for XLE is -5.656150-(-5.669793) = 0.013643. However,the difference of Schwarz criterion between EGARCH and GARCH for XLE is -6.488777-(-6.545748) = 0.056971. A larger performance gap between GARCH and EGARCH of the SPY than that of XLE indicates that SPY has a stronger strength of the asymmetry than XLE.
 
-
+## 3. Go to V-LAB and
+### A. find the volatility forecasts one day and one year ahead for the following assets using the GJR-GARCH model:
+As of March 8, 2020.
+|Tickers|One-Day|One-Year|
+|---|---|---|
+|SPX|40%|24%|
+|Merval|39.69%|40.84%|
+|Barclays Aggregate Government Bond Index|14.93%|12.56%|
+|Coca Cola|33.2%|31.07%|
+|MBIA|41.27%|47.34%|
+|Ruble Exchange rate|18.3%|18.69%|
+|Cohen and Steers Realty Majors Index|38.29%|27.94%|
+(Couldn't find Cohen and Steers Realty Majors Index on vlab. Used iShares Cohen & Steers REIT ETF instead)
 
 
 
