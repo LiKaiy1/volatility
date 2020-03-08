@@ -5,6 +5,7 @@ Before we get started, let's load the dataset and library.
 library(rugarch)
 library(ggplot2)
 library(reshape2)
+library(rmgarch)
 raw_data <- read.table("spyxlevix20.TXT",header = T)
 #Covert the date to date object
 raw_data$date <- as.Date(raw_data$date)
@@ -144,14 +145,77 @@ ggplot(spy_returns,aes(x=spy_return))+
 # ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_SPY.jpg")
 ```
 ### a) Compare GJR-GARCH and EGARCH with GARCH using the Schwarz criterion.
-Fit the data with each model first.
+Specify and fit data to each model first.
 ```{r}
+GJRgarchSpec <- ugarchspec(
+  variance.model=list(model="gjrGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),
+  distribution.model="norm")
+EgarchSpec <- ugarchspec(
+  variance.model=list(model="eGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),
+  distribution.model="norm")
+garch <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),
+  distribution.model="norm")
+#Fit data into models
+GJR_fit <- ugarchfit(
+  spec = GJRgarchSpec,
+  data = spy_returns$spy_return
+)
+E_fit <- ugarchfit(
+  spec = EgarchSpec,
+  data = spy_returns$spy_return
+)
+GARCH_fit <- ugarchfit(
+  spec = garch,
+  data = spy_returns$spy_return
+)
+```
+Then we check the Schwarz criterion of each model.
 
+```{r}
+infocriteria(GJR_fit)
+```
+The Schwarz criterion of GJR-GARCH is -6.537772.
+```{r}
+infocriteria(E_fit)
+```
+The Schwarz criterion of E-GARCH is -6.545748.
+```{r}
+infocriteria(GARCH_fit)
+```
+The Schwarz criterion of GARCH is -6.488777.
+
+**Both E-GARCH and GJR-GARCH are better than GARCH because their Schwarz criterion is smaller.**
+
+### c) Can you find something even better?
+Let's try a different distribution.
+```{r}
+EgarchSpecT <- ugarchspec(
+  variance.model=list(model="eGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),
+  distribution.model="sstd")
+Et_fit <- ugarchfit(
+  spec = EgarchSpecT,
+  data = spy_returns$spy_return
+)
+infocriteria(Et_fit)
+```
+**Using a skewed student distribution with E GARCH(1,1) model gives a lower Schwarz criterion and therefore is better.**
+
+### c) Describe the strength of the asymmetry in SP as compared with XLE.
+Fit the XLE data with EGARCH and GARCH to see the difference.
+```{r}
+xle_garch_fit <- ugarchfit(garch,data = xle_returns$xle_return)
+print(infocriteria(xle_garch_fit))
+print("_____________________")
+xle_egarch_fit <- ugarchfit(EgarchSpec,data = xle_returns$xle_return)
+print(infocriteria(xle_egarch_fit))
 ```
 
-
-
-
+**SPY has a stronger strength of the asymmetry than XLE.** Here is the reason. The difference of Schwarz criterion between EGARCH and GARCH for XLE is -5.656150-(-5.669793) = 0.013643. However,the difference of Schwarz criterion between EGARCH and GARCH for XLE is -6.488777-(-6.545748) = 0.056971. A larger performance gap between GARCH and EGARCH of the SPY than that of XLE indicates that SPY has a stronger strength of the asymmetry than XLE.
 
 
 
