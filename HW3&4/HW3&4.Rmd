@@ -10,7 +10,6 @@ raw_data <- read.table("spyxlevix20.TXT",header = T)
 #Covert the date to date object
 raw_data$date <- as.Date(raw_data$date)
 raw_data = na.omit(raw_data)
-raw_data
 ```
 Next, we plot all these series.
 ```{r}
@@ -21,7 +20,7 @@ ggplot(raw_data, aes(x=date)) +
   geom_line(aes(y=raw_data$vix,col='VIX'),alpha=1) +
   geom_line(aes(y=raw_data$xle,col='XLE'),alpha=1) +
     theme(legend.position=c(.1,.85))
-# ggplot2::ggsave("PricePaths.jpg")
+ggplot2::ggsave("PricePaths.jpg")
 ```
 
 ## You have a portfolio of $1,000,000 of stock all in XLE which is an energy ETF. What is the 1% one day Value at Risk for this portfolio on Monday Jan 20, 2020? Use the attached dataset.
@@ -36,7 +35,7 @@ ggplot(xle_returns, aes(x=date)) +
   labs(title="Logarithmic Daily Returns of XLE",
        caption="Source: Given ",
        y="Returns")
-# ggplot2::ggsave("XLE_Daily_Returns.jpg")
+ggplot2::ggsave("XLE_Daily_Returns.jpg")
 ```
 The distribution of XLE's return.
 ```{r}
@@ -46,7 +45,7 @@ ggplot(xle_returns,aes(x=xle_return))+
   labs(
   title = "Distribution of Logarithmic Daily Returns of XLE"
 )
-# ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_XLE.jpg")
+ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_XLE.jpg")
 ```
 
 ### a) Using the quantile from one year history it is?
@@ -60,7 +59,7 @@ ggplot(last_year_xle_returns,aes(x=xle_return))+
   labs(
   title = "Distribution of Logarithmic Daily Returns of XLE of Last Year"
 )
-# ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_XLE_Of_Last_Year.jpg")
+ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_XLE_Of_Last_Year.jpg")
 ```
 
 ```{r}
@@ -71,7 +70,7 @@ quantile(rets , 0.01)
 qplot(rets , geom = 'histogram') + geom_histogram(fill = 'lightblue' , bins = 30) +
     geom_histogram(aes(rets[rets < quantile(rets , 0.01)]) , fill = 'red' , bins = 30) +
     labs(x = 'Daily Returns',y='Count',caption = "Red:VaR" )
-# ggplot2::ggsave("Last_Year_VaR.jpg")
+ggplot2::ggsave("Last_Year_VaR.jpg")
 ```
 
 **Using one year data, the VaR is $32129.11. **
@@ -85,7 +84,7 @@ quantile(rets , 0.01)
 qplot(rets , geom = 'histogram') + geom_histogram(fill = 'lightblue' , bins = 30) +
     geom_histogram(aes(rets[rets < quantile(rets , 0.01)]) , fill = 'red' , bins = 30) +
     labs(x = 'Daily Returns',y='Count',caption = "Red:VaR" )
-# ggplot2::ggsave("Full_Dataset_Year_VaR.jpg")
+ggplot2::ggsave("Full_Dataset_Year_VaR.jpg")
 ```
 
 **Using full data, the VaR is $4516.11. **
@@ -132,7 +131,7 @@ ggplot(spy_returns, aes(x=date)) +
   labs(title="Logarithmic Daily Returns of SPY",
        caption="Source: Given ",
        y="Returns")
-# ggplot2::ggsave("SPY_Daily_Returns.jpg")
+ggplot2::ggsave("SPY_Daily_Returns.jpg")
 ```
 Plot the distribution of SPY returns.
 ```{r}
@@ -142,7 +141,7 @@ ggplot(spy_returns,aes(x=spy_return))+
   labs(
   title = "Distribution of Logarithmic Daily Returns of SPY"
 )
-# ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_SPY.jpg")
+ggplot2::ggsave("Distribution_of_Logarithmic_Daily_Returns_of_SPY.jpg")
 ```
 ### a) Compare GJR-GARCH and EGARCH with GARCH using the Schwarz criterion.
 Specify and fit data to each model first.
@@ -258,7 +257,7 @@ ggplot(join_vols, aes(x=date)) +
   scale_color_manual(name = "Variables",
                      values = c("VIX" = "red", "GJR" = "blue"))
     theme(legend.position=c(.1,.85))
-# ggplot2::ggsave("volatilities.jpg")
+ggplot2::ggsave("volatilities.jpg")
 ```
 
 First, the bias is due to a risk premium. VIX comes from options that are forward looking, and thus the volatility expectation for the future is included and there fore VIX is higher than GJR-GARCH volatilities. Also, the option traders has wider information and therefore has an expectation of future compared to other traders. 
@@ -273,7 +272,7 @@ ggplot(as.data.frame(bias),aes(x=bias))+
   labs(
   title = "Distribution of Bias"
 )
-# ggplot2::ggsave("Distribution_of_bias.jpg")
+ggplot2::ggsave("Distribution_of_bias.jpg")
 ```
 The mean of the bias is postive. Which means there is a persistent positive bias. VIX is higher than the GJR-GARCH fitted volatilities most of the time.
 
@@ -324,7 +323,7 @@ ggplot(data=vix_acf, mapping=aes(x=lag, y=acf))+
        geom_bar(stat = "identity", position = "identity")+
       geom_hline(yintercept = significance_level,colour = "red",linetype="dashed")+
   geom_hline(yintercept = -significance_level,colour = "red",linetype="dashed")
-# ggplot2::ggsave("ACF_Of_VIX_log_changes.jpg")
+ggplot2::ggsave("ACF_Of_VIX_log_changes.jpg")
 ```
 There is some significance (5%) autocorrelation in the first few lags.
 
@@ -334,9 +333,43 @@ It has volatility clustering. Lag 1, 2 are significantly autocorrelated at 5% si
 
 ###c) Build a model for the volatility of the vix that incorporates both these features. This is a model of the volatility of volatility.
 
-
-
-
+First, plot the returns(log difference) of vix.
+```{r}
+vix_changes <- data.frame(
+  vix_returns = log_changes_vix,
+  date = raw_data$date[-1]
+)
+ggplot(vix_changes, aes(x=date)) +
+  geom_line(aes(y=vix_returns),group = 1,colour = "red") +
+  labs(title="Logarithmic Daily Changes of VIX",
+       caption="Source: Given ",
+       y="Changes")
+ggplot2::ggsave("VIX_Daily_Changes.jpg")
+```
+Fit a GARCH(1,1) model because there are autocorrelations.
+```{r}
+garch <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),
+  distribution.model="norm")
+fit <- ugarchfit(spec = garch,data = log_changes_vix)
+infocriteria(fit)
+```
+Plot the residuals. 
+```{r}
+standarized_residuals <- (fit@fit$residuals-mean(fit@fit$residuals))/sqrt(var(fit@fit$residuals))
+Residuals <-data.frame(
+  residuals = standarized_residuals,
+  Date = raw_data$date[-1]
+)
+ggplot(Residuals,aes(x=residuals))+
+  geom_vline(aes(xintercept=mean(residuals)),colour = "blue",linetype="dashed")+geom_histogram(binwidth = 0.0125,colour = "brown2")+
+  geom_density(alpha=0.5, fill="#FF6666") +
+  labs(
+  title = "Distribution of Standarized Residuals"
+)
+ggplot2::ggsave("DistributionOfStandarizedResiduals.jpg")
+```
 
 
 
