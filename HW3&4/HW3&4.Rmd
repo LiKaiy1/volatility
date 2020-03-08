@@ -264,7 +264,7 @@ ggplot(join_vols, aes(x=date)) +
 First, the bias is due to a risk premium. VIX comes from options that are forward looking, and thus the volatility expectation for the future is included and there fore VIX is higher than GJR-GARCH volatilities. Also, the option traders has wider information and therefore has an expectation of future compared to other traders. 
 Second, the bias is also due to traders has to pay a premium to buy volatility. And therefore a positive bias is persistent for VIX over fitted volatilities. 
 
-## b) Plot the histogram of the bias. What is the interpretation of the mean?
+### b) Plot the histogram of the bias. What is the interpretation of the mean?
 ```{r}
 bias <- (join_vols$vix-join_vols$GJR_vols)/100
 ggplot(as.data.frame(bias),aes(x=bias))+
@@ -273,9 +273,42 @@ ggplot(as.data.frame(bias),aes(x=bias))+
   labs(
   title = "Distribution of Bias"
 )
-ggplot2::ggsave("Distribution_of_bias.jpg")
+# ggplot2::ggsave("Distribution_of_bias.jpg")
 ```
 The mean of the bias is postive. Which means there is a persistent positive bias. VIX is higher than the GJR-GARCH fitted volatilities most of the time.
+
+### c) Find the correlation between the log changes in VIX and the log changes in SP500.
+```{r}
+log_changes_vix <- diff(log(raw_data$vix))
+log_changes_spy <- diff(log(raw_data$spy))
+cor(log_changes_vix,log_changes_spy)
+```
+The correlation between the log changes in VIX and the log changes in SP500 is -0.731414.
+
+### d) Describe whether this is consistent with an Asymmetric Volatility model.
+The negative correlation between log changes in VIX and log changes in S&P 500 is consistent with an asymmetric volatility model. This is because during an uptrend of stock, stock returns are positive, however the volatility usually small during uptrend. When stock price decrease, stock return decrease and the negative correlation suggests that volatility increase.Therefore, negative correlation is consistent with asymmetric volatility.
+
+### e) Describe whether this correlation violates the Efficient Market Hypothesis.
+This correlation violates the efficient market hypothesis. EMH suggests that generating profit from market timing is impossible. However, a correlation between vix changes and stock returns suggests that timing strategy could potentially generate profit, because VIX has a forward looking bias. The expectation of future volatility has a negative correlation with stock returns suggests that some timing strategy could exist.
+
+### f) Regress SPY returns on lagged VIX squared. Assume the errors are GJR-GARCH. What is the interpretation of this regression?
+
+```{r}
+vix_squared <- (raw_data$vix[-1])**2
+regress <- lm(spy_returns$spy_return ~ vix_squared)
+summary(regress)
+```
+Because that the lagged VIX squared is significant, we could conclude that the vix index of the previous trading day has explanation power for today's stock return. The coefficient is negative, thus the previous trading day's vix has a negative effect on today's stock return. 
+
+## 6. If you are long a 1 month variance swap on a market index,
+### a) What will happen to your position on a day of large absolute returns?
+
+b) How will index option implied volatility change following a large positive
+return or a large negative return?
+c) Do you think variance swaps will respond differently to positive and negative
+returns? Why?
+
+
 
 
 
