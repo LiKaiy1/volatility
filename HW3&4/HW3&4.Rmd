@@ -230,10 +230,52 @@ As of March 8, 2020.
 |Ruble Exchange rate|18.3%|18.69%|
 |Cohen and Steers Realty Majors Index|38.29%|27.94%|
 (Couldn't find Cohen and Steers Realty Majors Index on vlab. Used iShares Cohen & Steers REIT ETF instead)
+### B. Are any of these out of line with your expectations from class? If so, can you say why?
+For S&P 500, the forecasted volatility for next day is much larger than that of next year, which is out of line with my expectation.This might has something to do with the panic in market corresponding with the coronavirus. 
+
+##  4. If the government introduced a policy that was widely viewed as being able to reduce the future uncertainty in the stock market by requiring more transparency in accounting principles, what effect would this have on stock prices today? Relate this to the asymmetric volatility effect.
+
+If a more transparent accounting principles were introduced, people would have more agreement on the valuation of these companies. According to Gregory R. Duffee's *Balance sheet explanations for asymmetric volatility* from Haas, UC Berkely, a change in firm's value has a correlation with firm's stock return. Balance effect was one of the source of asymmetric volatility. With a more transparent accounting principle, the asymmetric volatility should be reduced, the stock price should be less volatile. 
 
 
+## 5. Using the attached data on the VIX and SPY.
+### a) Plot the VIX and annualized GJR-GARCH volatilities to see whether there is a bias. What are two explanations for this bias?
 
+Annualized the GJR-GARCH fitted volatilities, and plot them.
+```{r}
+# annualized_GJR_vol <- 100*GJR_fit@fit$sigma*252^0.5
+annualized_GJR_vol <- 100*GJR_fit@fit$sigma*sqrt(252)
+#Join series.
+join_vols <- data.frame(
+  GJR_vols = annualized_GJR_vol,
+  vix = raw_data$vix[-1],
+  date = raw_data$date[-1]
+)
+ggplot(join_vols, aes(x=date)) +
+  ylab('Volatility')+
+  geom_line(aes(y=join_vols$vix,color='VIX'),alpha=1)+
+  geom_line(aes(y= join_vols$GJR_vols,col='GJR'),alpha=1)+
+  scale_color_manual(name = "Variables",
+                     values = c("VIX" = "red", "GJR" = "blue"))
+    theme(legend.position=c(.1,.85))
+# ggplot2::ggsave("volatilities.jpg")
+```
 
+First, the bias is due to a risk premium. VIX comes from options that are forward looking, and thus the volatility expectation for the future is included and there fore VIX is higher than GJR-GARCH volatilities. Also, the option traders has wider information and therefore has an expectation of future compared to other traders. 
+Second, the bias is also due to traders has to pay a premium to buy volatility. And therefore a positive bias is persistent for VIX over fitted volatilities. 
+
+## b) Plot the histogram of the bias. What is the interpretation of the mean?
+```{r}
+bias <- (join_vols$vix-join_vols$GJR_vols)/100
+ggplot(as.data.frame(bias),aes(x=bias))+
+  geom_vline(aes(xintercept=mean(bias)),colour = "red",linetype="dashed")+geom_histogram(binwidth = 0.00125,colour = "blue")+
+  geom_density(alpha=0.05, fill="#FF6666") +
+  labs(
+  title = "Distribution of Bias"
+)
+ggplot2::ggsave("Distribution_of_bias.jpg")
+```
+The mean of the bias is postive. Which means there is a persistent positive bias. VIX is higher than the GJR-GARCH fitted volatilities most of the time.
 
 
 
