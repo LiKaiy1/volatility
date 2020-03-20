@@ -375,6 +375,9 @@ ggplot2::ggsave("DistributionOfStandarizedResiduals.jpg")
 
 
 
+```{r}
+fit
+```
 
 
 
