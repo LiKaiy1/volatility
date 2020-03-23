@@ -1,2 +1,100 @@
-# HW 5
-This R notebook is created by Kaiyi Li at 10:27 AM 
+#HW 5
+This R notebook is created by Kaiyi Li for volatility class homework 5 at 10:27 AM Friday, March 20, 2020.
+
+##1. 	The	following method	of	moment	will	help	calibrating	the	asset	value	approach to default.	
+Let $D_t$ denote the number of obligors that defaulted in period t, and $N_t$ the number
+of obligors that belonged to the group at the start of period t. We will assume that
+one period corresponds to one year. Data is observed over T years. Assume that all
+obligors have the same default probability, i.e., we set $p_i=p_j = p$; our default
+threshold is then $c_i = c_j =d= \Phi^{-1}(p)$. Use data spd.csv for the following questions
+
+Before anything started, we read the dataset spd.csv
+```{r}
+spd <- read.csv('spd.csv')
+spd <- data.frame(
+  year = spd$year.t,
+  Dt = spd$X..defaults..Dt.,
+  Nt = spd$X..obligors..Nt.
+)
+spd
+```
+
+###a) Calculate the average default probability by
+
+$$
+\hat{p} = \frac{1}{T}\sum_{t=1}^T\frac{D_t}{N_t}
+$$
+```{r}
+spd = cbind(spd,pt = spd$Dt/spd$Nt)
+spd
+```
+```{r}
+sum(spd$pt)/length(spd$year)
+```
+
+Therefore, the average default probability would be ** 0.001144022**.
+
+###b) Consider obligator i's asset value $A_i$ as one factor model. 
+$$
+A_i = w_iZ+\sqrt{1-w_i^2} \varepsilon_i\\
+cov(\varepsilon_i,\varepsilon_j) = 0\\
+cov(Z,\varepsilon_j) = 0\\
+\forall i
+$$
+###Find $\rho_{i,j}^{asset}$
+
+For $E(A_i),E(A_j)$, they can be calculated as 
+$$
+E(A_i) = w_iE(Z)+\sqrt{1-w_i^2}E(\varepsilon_i)\\
+E(A_j) = w_jE(Z)+\sqrt{1-w_j^2}E(\varepsilon_j)
+$$
+Therefore, we have the variance calculated as 
+$$
+Var(A_i) = (A_i -E(A_i))^2\\
+=(w_iZ+\sqrt{1-w_i^2} \varepsilon_i-w_iE(Z)-\sqrt{1-w_i^2} E(\varepsilon_i))^2\\
+=(w_i(Z-E(Z))+\sqrt{1-w_i^2}(\varepsilon_i-E(\varepsilon_i)))^2\\
+=w_i^2(Z-E(Z))^2+(1-w_i^2)(\varepsilon_i-E(\varepsilon_i))^2+2w_i\sqrt{1-w_i^2}(Z-E(Z))(\varepsilon_i-E(\varepsilon_i))\\
+=w_i^2Var(Z)+(1-w_i^2)Var(\varepsilon_i)+2w_i\sqrt{1-w_i^2}Cov(Z,\varepsilon_i)\\
+$$
+Because $Cov(Z,\varepsilon_i) = 0$, we then have 
+$$
+Var(A_i) = w_i^2Var(Z)+(1-w_i^2)Var(\varepsilon_i)\\
+\text{Similarly, we also have}\\
+Var(A_j) = w_j^2Var(Z)+(1-w_j^2)Var(\varepsilon_j)\\
+$$
+For the covariance, we have 
+$$
+Cov(A_i,A_j) = E[(A_i-E(A_i))(A_j-E(A_j))]\\
+=E[(w_i(Z-E(Z))+\sqrt{1-w_i^2}(\varepsilon_i-E(\varepsilon_i)))(w_j(Z-E(Z))+\sqrt{1-w_j^2}(\varepsilon_j-E(\varepsilon_j)))]\\
+=E[w_iw_j(Z-E(Z))^2+w_i\sqrt{1-w_j^2}(Z-E(Z))(\varepsilon_j-E(\varepsilon_j))+\\
+w_j\sqrt{1-w_i^2}(Z-E(Z))(\varepsilon_i-E(\varepsilon_i))+\sqrt{1-w_i^2}\sqrt{1-w_j^2}(\varepsilon_i-E(\varepsilon_i))(\varepsilon_j-E(\varepsilon_j))]\\
+=E[w_iw_jVar(Z)+w_i\sqrt{1-w_j^2}Cov(Z,\varepsilon_j)+\\
+w_j\sqrt{1-w_i^2}Cov(Z,\varepsilon_i)+\sqrt{1-w_i^2}\sqrt{1-w_j^2}Cov(\varepsilon_i,\varepsilon_j)]\\
+\text{Given we have}\\
+Cov(\varepsilon_i,\varepsilon_j) = 0,Cov(Z,\varepsilon_j) = 0,Cov(Z,\varepsilon_i) = 0\\
+\text{So,}\\
+Cov(A_i,A_j)=E[w_iw_jVar(Z)]\\
+$$
+Eventually, we have the correlation as $\rho_{i,j}^{asset}$, which is calculated as 
+$$
+\rho_{i,j}^{asset} = \frac{Cov(A_i,A_j)}{\sigma_{A_i}\sigma_{A_j}}\\
+=\frac{E[w_iw_jVar(Z)]}{\sqrt{Var(A_i),Var(A_j)}}\\
+=\frac{E[w_iw_jVar(Z)]}{\sqrt{Var(A_i)Var(A_j)}}\\
+=\frac{E[w_iw_jVar(Z)]}{\sqrt{w_i^2w_j^2}Var(Z)}
+$$
+
+###c) Under the setting that obligors have the same default probability, what happen to the previous correlation?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
