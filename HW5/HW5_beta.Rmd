@@ -80,10 +80,61 @@ $$
 \rho_{i,j}^{asset} = \frac{Cov(A_i,A_j)}{\sigma_{A_i}\sigma_{A_j}}\\
 =\frac{E[w_iw_jVar(Z)]}{\sqrt{Var(A_i),Var(A_j)}}\\
 =\frac{E[w_iw_jVar(Z)]}{\sqrt{Var(A_i)Var(A_j)}}\\
-=\frac{E[w_iw_jVar(Z)]}{\sqrt{w_i^2w_j^2}Var(Z)}
+=\frac{E[w_iw_jVar(Z)]}{\sqrt{w_i^2w_j^2}Var(Z)}\\
+=\frac{E[w_iw_j]}{\sqrt{w_i^2w_j^2}}
 $$
 
 ###c) Under the setting that obligors have the same default probability, what happen to the previous correlation?
+The default probability for all obligors, p, and the default correlation 
+
+###d) The distribution for joint defaults for year t will be estimated as follows:
+$$
+\hat{p}_{2t} =\frac{D_t(D_t-1)}{N_t(N_t-1)}
+$$
+### Calculate the average probability for joint defaults, $\hat{p}_2$, over T years.
+
+```{r}
+spd = cbind(spd,p2 = (spd$Dt*(spd$Dt-1))/(spd$Nt*(spd$Nt-1)))
+spd
+```
+```{r}
+sum(spd$p2)/length(spd$year)
+```
+Therefore, the average probability for joint defaults over T years would be **0.000002199**.
+
+###d) Further more, assume the joint distribution of asset values of obligor i and obligor j follow bivariate normal distribution. What is the correlation of the bivariate normal?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
