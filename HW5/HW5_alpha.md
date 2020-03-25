@@ -1,7 +1,13 @@
 #HW 5
+*Kaiyi Li*
+
+*kl2538*
+
+*N18881575*
+
 This R notebook is created by Kaiyi Li for volatility class homework 5 at 10:27 AM Friday, March 20, 2020. 
 
-Github link: 
+Github link: https://github.com/LiKaiy1/volatility/blob/master/HW5/HW5_Kaiyi_Li.pdf
 
 ##1. 
 Before anything started, we read the dataset spd.csv
