@@ -1,5 +1,7 @@
 #HW 5
-This R notebook is created by Kaiyi Li for volatility class homework 5 at 10:27 AM Friday, March 20, 2020.
+This R notebook is created by Kaiyi Li for volatility class homework 5 at 10:27 AM Friday, March 20, 2020. 
+
+Github link: 
 
 ##1. 
 Before anything started, we read the dataset spd.csv
@@ -70,14 +72,27 @@ $$
 =\frac{w_iw_jVar(Z)}{\sigma_{A_i}\sigma_{A_j}}
 $$
 
+**Note that if we suggest $A,Z,\varepsilon$ all follows normal distribution $\mathcal{N}(0,1)$, **we would have 
+$$
+\rho_{i,j}^{asset} = \frac{Cov(A_i,A_j)}{1*1} = w_iw_j
+$$
+
+
 ###c) 
+
 The default probability for all obligors, p, and the default correlation becames 
 $$
 \rho_{ij} = \frac{p_ip_j}{\sqrt{p_i(1-p_i)p_j(1-p_j)}}\\
 \text{Given that} \\p_i = p_j = p\\
 \rho_{ij}=\frac{p}{1-p}\\
 $$
-**However, the asset correlation, $\rho_{i,j}^{asset}$ has nothing to do with default probability, and therefore should remain the same.**
+**However, the asset correlation, $\rho_{i,j}^{asset}$ has nothing to do with default probability, and therefore should remain the same.** 
+
+But with all the companies have the same default probabilities, $w_i = w_j = w$ . And then the asset correlation can be written as 
+$$
+\rho_{i,j}^{asset} = \frac{w^2Var(Z)}{\sigma_{A_i}\sigma_{A_j}}
+$$
+Or as we assume normality for all variables, we would have $\rho_{i,j}^{asset} = w^2$ .
 
 ###d) 
 $$
@@ -249,3 +264,4 @@ bLGD=qbeta(pnorm(tlgd_pred),a,b)
 bLGD
 ```
 **The predicted LGD is 0.7789802.**
+
