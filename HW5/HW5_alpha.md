@@ -75,12 +75,9 @@ $$
 Eventually, we have the correlation as $\rho_{i,j}^{asset}$, which is calculated as 
 $$
 \rho_{i,j}^{asset} = \frac{Cov(A_i,A_j)}{\sigma_{A_i}\sigma_{A_j}}\\
-=\frac{w_iw_jVar(Z)}{\sigma_{A_i}\sigma_{A_j}}
-$$
-
-**Note that if we suggest $A,Z,\varepsilon$ all follows normal distribution $\mathcal{N}(0,1)$, **we would have 
-$$
-\rho_{i,j}^{asset} = \frac{Cov(A_i,A_j)}{1*1} = w_iw_j
+=\frac{w_iw_jVar(Z)}{\sigma_{A_i}\sigma_{A_j}}\\
+=\frac{w_iw_jVar(Z)}{Var(Z)}\\
+=w_iw_j
 $$
 
 
@@ -96,7 +93,7 @@ $$
 
 But with all the companies have the same default probabilities, $w_i = w_j = w$ . And then the asset correlation can be written as 
 $$
-\rho_{i,j}^{asset} = \frac{w^2Var(Z)}{\sigma_{A_i}\sigma_{A_j}}
+\rho_{i,j}^{asset} = w_iw_j=w^2\\
 $$
 Or as we assume normality for all variables, we would have $\rho_{i,j}^{asset} = w^2$ .
 
@@ -116,13 +113,14 @@ average_joint_default_prob
 Therefore, the average probability for joint defaults over T years would be **0.000002199**.
 
 ###e)
+
 The correlation then is 
 $$
 \rho_{i,j}^{asset} = \frac{Cov(A_i,A_j)}{\sigma_{A_i}\sigma_{A_j}}\\
 =\frac{w_iw_jVar(Z)}{\sigma_{A_i}\sigma_{A_j}}\\
 =w_iw_j
 $$
-##f) 
+###f) 
 $$
 p_{ij} = \Phi_2(d_i,d_j,\rho_{ij}^{asset})
 $$
