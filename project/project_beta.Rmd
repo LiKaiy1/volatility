@@ -47,15 +47,15 @@ simulate_garch <- function(omega,alpha,beta,sigma1,N){
     sigmas <- c(sigmas,sigma)
   }
   simulation_result <- data.frame(
-    sigmas = sigmas,
     index = c(1:N-1000),
+    sigmas = sigmas,
     r = rs
   )
   simulation_result = tail(simulation_result,-1000)
   return(simulation_result)
 }
 simulation_result <- simulate_garch(omega,alpha,beta,sigma1,N)
-
+write.csv(simulation_result,'simulation_result.csv')
 library(ggplot2)
 theme_set(theme_classic())
 ggplot(data=simulation_result,aes(x=index, y=sigmas, group=1)) +
@@ -88,18 +88,29 @@ Then we drop the first term $f(r_0;\theta)$ because it is a constant, and then t
 $$
 \mathcal{L}(\theta) = \sum_{t=1}^{T} -\frac{1}{2} [ln(2\pi)+ln(\sigma_t^2) +\frac{r_t^2}{\sigma_t^2}]
 $$
-After we have the log-likelihood function, our objective would be find a vector $\theta$ that can maximize $\mathcal{L(\theta)}$. 
+After we have the log-likelihood function, our objective would be find a vector $\hat\theta$ that can maximize $\mathcal{L(\theta)}$. 
+$$
+\hat\theta = \underset{\theta}{\operatorname{argmax}} \mathcal{L}(\theta) = \underset{\theta}{\operatorname{argmin}}-\mathcal{L}(\theta)
+$$ 
+
 Note that we also have three constraints:
 $$
 \alpha\ge0;\beta\ge0;\alpha+\beta<1
 $$
+Normally, we could take derivatives use KKT to tackle with this optimization problem. However, due to the recursive nature of GARCH models, it turns out to be very difficult to use these traditional optimization methods. 
+
+This is done using slsqp in python using scipy optimize. 
+The resutl we got is 
+theta MLE: [1.00006464 0.29826454 0.50190327].
+
+##Fit data with GMM
+We use four moments for this GMM estimation.
+
+
 
 ```{r}
 
 ```
-
-
-
 
 
 
