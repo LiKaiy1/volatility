@@ -92,6 +92,47 @@ After we have the log-likelihood function, our objective would be find a vector 
 $$
 \hat\theta = \underset{\theta}{\operatorname{argmax}} \mathcal{L}(\theta) = \underset{\theta}{\operatorname{argmin}}-\mathcal{L}(\theta)
 $$ 
+Function to compute sigma squared. 
+```{r}
+compute_squared_sigmas <- function(rs,initial_sigma,theta){
+  omega <- theta[1]
+  alpha <- theta[2]
+  beta <- theta[3]
+  t  <- length(rs)
+  sigma_squares <- c(initial_sigma**2)
+  for (i in 2:t) {
+    sigma_squares_i <- omega+alpha*rs[i-1]**2+beta*sigma_squares[i-1]
+    sigma_squares <- c(sigma_squares,sigma_squares_i)
+  }
+  return(sigma_squares)
+}
+
+
+negative_log_likelihood_for_garch <- function(theta,rs=simulation_result$r){
+  # rs <- simulation_result$r
+  t <- length(rs)
+  
+  # Generate initial sigma squared
+  initial_sigma <- sqrt(mean(rs**2))
+  theta <- theta
+  #Generate squared sigma values.
+  sigma_squares <- compute_squared_sigmas(rs, initial_sigma, theta)
+  #Compute likelihood for each t from 1 to T
+  log_likelihoods <- c()
+  for (i in 1:t) {
+    log_likelihood <- -1/2*(log(2*pi)+log(sigma_squares[i]**2)+rs[i]**2/sigma_squares[i])
+    log_likelihoods <- c(log_likelihoods,log_likelihood)
+    # print(log_likelihood)
+  }
+  negative_log_likelihood <- sum(log_likelihoods)
+  return(negative_log_likelihood)
+}
+# test compute squared sigmas
+# mean(compute_squared_sigmas(simulation_result$r,2,c(1,0.3,0.5)))-mean(simulation_result$sigmas**2)
+# Test log likelihoods.
+
+```
+
 
 Note that we also have three constraints:
 $$
@@ -99,17 +140,102 @@ $$
 $$
 Normally, we could take derivatives use KKT to tackle with this optimization problem. However, due to the recursive nature of GARCH models, it turns out to be very difficult to use these traditional optimization methods. 
 
+
 This is done using slsqp in python using scipy optimize. 
 The resutl we got is 
 theta MLE: [1.00006464 0.29826454 0.50190327].
 
 ##Fit data with GMM
 We use four moments for this GMM estimation.
+$$
+\hat{\epsilon} = \frac{1}{T}\sum_{t=1}^{T}\frac{r_t}{\sigma_t}\\
+Var(\epsilon) = \frac{1}{T}\sum_{t=1}^{T}\epsilon_t^2 =\frac{1}{T}\sum_{t=1}^{T}(\frac{r_t}{\sigma_t})^2\\
+Skew(\epsilon) = \frac{1}{T}\sum_{t=1}^{T}(\frac{r_t^3}{\sigma_t^3})\\
+Kurtosis(\epsilon) = \frac{1}{T}\sum_{t=1}^{T}(\frac{r_t^4}{\sigma_t^4})\\
+$$
+Start with an identity matrix *W_0* and estimate a $\theta$ to minimize the object below:
+$$
+\min_{\theta \in \Theta} \left(\frac{1}{T} \sum_{t=1}^T g(r_t, \hat\theta)\right)' W_0 \left(\frac{1}{T}\sum_{t=1}^T g(r_t, \hat\theta)\right)
+$$
+Define the function to calculate the objective.
+```{r}
+gmm_objective_cal <- function(theta,W=diag(4),rs=simulation_result$r){
+  #Initial Sigma 
+  initial_sigma <- sqrt(mean(rs**2))
+  # theta <- theta[1:3]
+  #Calculate sigma_squares
+  sigma_squares <- compute_squared_sigmas(rs,initial_sigma,theta)
+  sigmas <- sqrt(sigma_squares)
+  #Compute moments
+  m1 <- mean(rs/sigmas)
+  m2 <- mean(rs**2/sigma_squares)-1
+  m3 <- mean(rs**3/sigmas**3)
+  m4 <- mean((rs**4/sigma_squares**2)-3)
+  #initialized g
+  g <- c(m1,m2,m3,m4)
+  # print(g)
+  objective <- t(g) %*% W %*% g 
+  # next_W <- g %*% t(g)
+  # print(next_W)
+  return(objective)
+}
+W <- diag(4)
+objective <- gmm_objective_cal(c(1,0.3,0.5))
+# objective
+```
+
+```{r}
+gmm_cov <- function(theta,rs=simulation_result$r){
+  initial_sigma <- sqrt(mean(rs**2))
+  # theta <- theta[1:3]
+  #Calculate sigma_squares
+  sigma_squares <- compute_squared_sigmas(rs,initial_sigma,theta)
+  sigmas <- sqrt(sigma_squares)
+  #Compute moments
+  m1 <- mean(rs/sigmas)
+  m2 <- mean(rs**2/sigma_squares)-1
+  m3 <- mean(rs**3/sigmas**3)
+  m4 <- mean((rs**4/sigma_squares**2)-3)
+  #initialized g
+  g <- c(m1,m2,m3,m4)
+  W <- g%*%t(g)
+  return(W)
+}
+W <- gmm_cov(c(1,0.3,0.5))
+W
+```
+
+
+```{r}
+#Main Loops.
+W = diag(4)
+for(i in 1:3){
+  objective_value <- gmm_objective_cal(c(1,0.3,0.5),W=W)
+  print(objective_value)
+  #Optimize
+  result <- constrOptim(theta = c(1,0.1,0.3),f=gmm_objective_cal,grad = NULL,ui=rbind(c(0,1,0),c(0,0,1),c(0,-1,-1)),ci =c(0,0,-1))
+  #Iterate
+  g <- result$par
+  print(g)
+  W = gmm_cov(g)
+}
+```
+
+
+---------------------------------------------------------
+Appendix:
+Convex Minimization Function
+
+
+
+
+
 
 
 
 ```{r}
-
+result <- constrOptim(theta = c(1,0.1,0.3),f=gmm_objective_cal,grad = NULL,ui=rbind(c(0,1,0),c(0,0,1),c(0,-1,-1)),ci = c(0,0,-1))
+result$par
 ```
 
 
@@ -124,6 +250,72 @@ We use four moments for this GMM estimation.
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+###Monte Carlo Minimum
+
+
+
+```{r}
+
+# generate_thetas <- function(n){
+#   results <- matrix(nrow = 0, ncol = 3)
+#   for (i in 1:n) {
+#     theta <- c(1,runif(1),runif(1))
+#     results <- rbind(results,theta)
+#   }
+#   return(results)
+# }
+# # Test function for mmc
+# test_obj <- function(theta){
+#   return(1-theta[2]-theta[3])
+# }
+# 
+# for ( i in 100) {
+#   results <- generate_thetas(100)
+# 
+# }
+# 
+# minimization_using_mc <- function(n){
+#    thetas <- generate_thetas(n)
+#    result <- test_obj(thetas[1,])
+#    for (i in 2:n) {
+#      theta <- thetas[i,]
+#      #Find the minimum objective.
+#      ## Test
+#      # new_result <- test_obj(theta)
+#      ## Find the minimum neg-loglikelihood
+#      new_result <- negative_log_likelihood_for_garch(rs = simulation_result$r, theta)
+#      if(new_result<result){
+#        result <- new_result
+#      }
+#      # print(result)
+#    }
+#    return(theta) }
+# # generate_thetas(100)[2,]
+# theta <- minimization_using_mc(1000)
+# theta
+```
+
+
+
+
+
+
+```{r}
+theta <- c(1,2,3,4)
+theta <- theta[1:3]
+theta
+```
 
 
 
