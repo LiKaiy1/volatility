@@ -1,0 +1,16 @@
+```{r}
+gspc <- read.csv('GSPC.csv')
+gspc <- gspc$Close
+returns<-diff(log(gspc))
+# returns
+```
+
+
+```{r}
+garchSpec <- ugarchspec(
+  variance.model=list(model="sGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F))
+fit = ugarchfit(spec = garchSpec, data = returns)
+print(fit)
+```
+
