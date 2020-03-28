@@ -1,0 +1,176 @@
+# Last Part Of Volatility Final Project: Real Life Application, Stock Price Forecasting. 
+
+All the effort was trying to get a gauk on how to estimate the parameter of GARCH(1,1). Now we go for the real life application. 
+
+
+Load the data.
+```{r}
+gspc <- read.csv("GSPC.csv")
+gspc <- data.frame(
+  DATE = as.Date.factor(gspc$Date),
+  Price = gspc$Close
+)
+vix <- read.csv("VIX.csv")
+vix <- data.frame(
+  DATE = as.Date.factor(vix$Date),
+  VIX = vix$Close
+)
+```
+
+Plot the price paths for S&P500 and VIX.
+```{r}
+library(ggplot2)
+library(dplyr)
+theme_set(theme_classic())
+ggplot(gspc, aes(x=DATE, y=Price)) +
+  geom_line() + 
+  labs(title="S&P 500 Path",
+       caption="Source: Yahoo Finance",
+       y="Price")
+ggplot2::ggsave("GSPCPath.jpg")
+```
+```{r}
+ggplot(vix, aes(x=DATE, y=VIX)) +
+  geom_line() + 
+  labs(title="CBOE Volatility",
+       caption="Source: Yahoo Finance",
+       y="VIX index")
+ggplot2::ggsave("VIXPath.jpg")
+```
+Then we plot the returns of S&P 500.
+```{r}
+daily_returns <- data.frame(
+  Date = gspc$DATE[-1],
+  Returns = diff(log(gspc$Price))
+)
+ggplot(daily_returns, aes(x=Date)) +
+  geom_line(aes(y=Returns),group = 1,colour = "blue") +
+  labs(title="Logarithmic Daily Returns of S&P500",
+       caption="Source: Yahoo Finance ",
+       y="Returns")
+ggplot2::ggsave("GSPCReturnPath.jpg")
+```
+
+We have done this before in HW3&4, we believe GJR-GARCH(1,1) is a better fit for S&P 500. Note that the fit mechanism for GJR GARCH is also MLE.
+```{r}
+library(rugarch)
+GJRgarchSpec <- ugarchspec(
+  variance.model=list(model="gjrGARCH", garchOrder=c(1,1)),
+  mean.model=list(armaOrder = c(0,0),include.mean=F),
+  distribution.model="norm")
+GJR_fit <- ugarchfit(
+  spec = GJRgarchSpec,
+  data = daily_returns$Returns
+)
+# GJR_fit
+```
+Then we plot the GJR fitted volatility as a comparison to VIX.
+```{r}
+annualized_GJR_vol <- 100*GJR_fit@fit$sigma*sqrt(252)
+#Join series.
+join_vols <- data.frame(
+  GJR_vols = annualized_GJR_vol,
+  vix = vix$VIX[-1],
+  date = vix$DATE[-1]
+)
+ggplot(join_vols, aes(x=date)) +
+  ylab('Volatility')+
+  geom_line(aes(y=join_vols$vix,color='VIX'),alpha=1)+
+  geom_line(aes(y= join_vols$GJR_vols,col='GJR'),alpha=1)+
+  scale_color_manual(name = "Variables",
+                     values = c("VIX" = "red", "GJR" = "blue"))
+    theme(legend.position=c(.1,.85))
+ggplot2::ggsave("volatilities.jpg")
+```
+Now we start our forecast using GJR:
+```{r}
+forc = ugarchforecast(GJR_fit, n.ahead=30)
+```
+
+```{r}
+forecasted_sigmas <- c(unclass(sigma(forc))[,"1990-11-08 08:00:00"][1:30])
+forescasted_and_estimated <- c(GJR_fit@fit$sigma,forecasted_sigmas)
+date <- daily_returns$Date
+horizon <- seq.Date(as.Date(date[length(date)])+1, length.out = 30, by = "day")
+horizon <- c(as.Date(date)[-1],horizon)
+combined_daily_data <- data.frame(
+  Date = horizon,
+  volatilities = forescasted_and_estimated[-1],
+  col = c(rep("blue", 7615), rep("red", 30))
+)
+ggplot(combined_daily_data, aes(x=Date, y=volatilities)) +
+  geom_line(aes(colour=col, group=1)) +
+  scale_colour_identity()+
+  labs(
+    title = "Estimate and Predicted Daily Volatility",
+    caption = "Yellow: Estimates, Green: Predicted"
+  )
+ggplot2::ggsave("EstimateAndPredictedDailyVolatility.jpg")
+```
+
+Then we plot the return forecasted.
+```{r}
+forecasted_returns <- forecasted_sigmas*rnorm(1)
+forescasted_and_historical <- c(daily_returns$Returns,forecasted_returns)
+# horizon <- seq.Date(as.Date(date[length(date)])+1, length.out = 30, by = "day")
+# horizon <- c(as.Date(date)[-1],horizon)
+combined_return_daily_data <- data.frame(
+  Date = horizon,
+  returns = forescasted_and_historical[-1],
+  col = c(rep("blue", 7615), rep("red", 30))
+)
+ggplot(combined_return_daily_data, aes(x=Date, y=returns)) +
+  geom_line(aes(colour=col, group=1)) +
+  scale_colour_identity()+
+  labs(
+    title = "Historical and Predicted Daily Return",
+    caption = "Blue: Historical Returns, Red: Predicted"
+  )
+ggplot2::ggsave("HistoricalAndPredictedDailyReturn.jpg")
+```
+
+Calculate the predicted stock price given return.
+```{r}
+Predicted_Horizon <- seq.Date(as.Date(date[length(date)])+1, length.out = 30, by = "day")
+last_historical_price <- tail(gspc,1)$Price
+```
+
+
+```{r}
+last_historical_price <- tail(gspc,1)$Price
+forecasted_prices <- c(last_historical_price)
+for (i in 1:length(forecasted_returns)) {
+  predict_price <- forecasted_prices[i]*(1+forecasted_returns)
+  # predict_price <- forecasted_prices[i]*log(1+forecasted_returns)
+  forecasted_prices <- c(forecasted_prices,predict_price)
+}
+predicted_stock_price_path <- data.frame(
+  Date = Predicted_Horizon,
+  prediction = forecasted_prices[-1]
+)
+# predicted_stock_price_path
+ggplot(predicted_stock_price_path, aes(x=Date, y=prediction)) +
+  geom_line() + 
+  labs(title="S&P 500 Path",
+       caption="Source: Forcasted",
+       y="Price")
+ggplot2::ggsave("Predicetd_Path.jpg")
+```
+
+
+
+Bayes GARCH(1,1) Estimation
+
+```{r}
+# library(bayesGARCH)
+# simulation_result <- read.csv("simulation_result.csv")
+# y <- simulation_result$r
+# MCMC <- bayesGARCH(y, lambda = 100, delta = 500,
+# control = list(n.chain = 2, l.chain = 200))
+# jpeg('mcmc.jpg')
+# plot(MCMC)
+# dev.off()
+```
+
+
+
